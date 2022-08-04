@@ -13,14 +13,12 @@ typedef struct {
 }handler;
 typedef handler * hndptr;
 
-int *addresses;
 int misses;
 
 handler crt_handler(int ref_ram, int ref_swap, int amount_ram, int amount_swap){
-	handler p = {malloc(sizeof(page)*(amount_ram + amount_swap)), amount_ram + amount_swap};
+	handler p = {malloc(sizeof(pgptr)*(amount_ram + amount_swap)), amount_ram + amount_swap};
 	int index = 0;
 	misses = 0;
-	addresses = malloc(sizeof(int)*(amount_swap));
 	
 	srand(time(NULL));
 	for(int i = 0; i < amount_ram; i++, index++){
@@ -29,12 +27,13 @@ handler crt_handler(int ref_ram, int ref_swap, int amount_ram, int amount_swap){
 		write_swap(i, p.pages[index]);
 		addresses[i] = i;
 	}
-
+	
 	for(int i = amount_ram; i < amount_swap; i++, index++){
 		p.pages[index] = crt_page(rand(), SWAP, ref_swap + i);
 		write_swap(i, p.pages[index]);
 		addresses[i] = -1;
 	}
+	
 	return p;
 }
 
@@ -56,8 +55,6 @@ int get_removable_frame_NUR(){ // NUR
 		}
 	}
 	return start;
-
-
 }
 
 int get_removable_frame_AGING(){ // Aging
@@ -97,17 +94,17 @@ void release_page(int ind){
 	(ram.pages[x]).ref = 0;
 }
 
-void undirtify(){
-	int i;
-	for(i=0; i<RAM_SIZE; i++){
-		(ram.pages[i]).drty = 0;
-	}
-}
-
 void release_all(){
 	int i;
 	for(i=0; i<RAM_SIZE; i++){
 		release_page(i);
+	}
+}
+
+void undirtify(){
+	int i;
+	for(i=0; i<RAM_SIZE; i++){
+		(ram.pages[i]).drty = 0;
 	}
 }
 
@@ -129,6 +126,7 @@ void update_pages(){
 		}
 	}
 	
-	//undirtify();
+	undirtify();
+}
 
 #endif

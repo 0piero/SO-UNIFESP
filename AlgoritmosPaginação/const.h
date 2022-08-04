@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <unistd.h>
+#include <pthread.h>
 
 /*----------------------------------*/
 #define RAM 1
