@@ -17,6 +17,7 @@ pgptr crt_page(int dat, bool location, int block){
 	pgptr p = malloc(sizeof(page));
 	page template = {false, false, dat, 0, location, block};
 	*p = template;
+
 	return p;
 }
 
@@ -30,7 +31,7 @@ void print_page(page pg, int index){
 	printf(" |   block.%02d   |\n", pg.block);
 	printf(" |     age:     |\n");
 	printf(" |  <%8d>  |\n", pg.age);
-	printf(" |     dat:     |\n");
+	printf(" |     data:     |\n");
 	printf(" | <%10d> |\n", pg.dat);
 	printf(" |______________|\n");
 }

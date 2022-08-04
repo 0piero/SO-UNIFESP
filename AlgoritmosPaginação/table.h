@@ -8,6 +8,4 @@ typedef struct {
 	bool location;
 } table;
 
-
-
 #endif

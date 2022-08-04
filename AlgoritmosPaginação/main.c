@@ -18,7 +18,7 @@ int main(){
 	int times[4];
 	//pthread_t threads[4];
 
-	ram = crt_memory(RAM_SIZE);
+	crt_memory(RAM_SIZE, &ram);
 	
 	printf("\n\n=====================INICIAL===================\n");
 	
