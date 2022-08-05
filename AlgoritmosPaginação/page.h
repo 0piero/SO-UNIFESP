@@ -1,8 +1,6 @@
 #include "const.h"
-
 #ifndef HEADER_PAGE
 #define HEADER_PAGE
-
 typedef struct {
 	bool ref;
 	bool drty;
@@ -21,6 +19,16 @@ pgptr crt_page(int dat, bool location, int block){
 	return p;
 }
 
+void ref_page(pgptr pg){
+	pg->ref = true;
+	ref_times[pg->block] = VIRTUAL_TIME;
+}
+
+void mdf_page(pgptr pg, int dat){
+	pg->dat = dat;
+	pg->drty = true;
+}
+
 void print_page(page pg, int index){
 	printf("  ______________ \n");
 	printf(" |   Pagina %d   |\n", index);
@@ -31,7 +39,7 @@ void print_page(page pg, int index){
 	printf(" |   block.%02d   |\n", pg.block);
 	printf(" |     age:     |\n");
 	printf(" |  <%8d>  |\n", pg.age);
-	printf(" |     data:     |\n");
+	printf(" |     data:    |\n");
 	printf(" | <%10d> |\n", pg.dat);
 	printf(" |______________|\n");
 }

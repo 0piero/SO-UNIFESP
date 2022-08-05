@@ -12,7 +12,7 @@ void run_b(int p){
 	ind = get_page(p);
 	print_page((ram.pages[ind]), ind);
 }
-
+int registros[NUM_ITERS];
 int main(){
 	int ind;
 	int times[4];
@@ -32,27 +32,29 @@ int main(){
 	print_all_in_mem();
 	print_addresses();
 	
-	for(ind=0; ind<5; ind++){
-		usleep(100*1000);
+	for(ind=0; ind<100; ind++){
+		usleep(1*1000);
 		printf("\n\n=====================PASSADA===================\n");
-		/*times[0] = rand()%3;
-		pthread_create(&(threads[0]), NULL, run_a, &(times[0]));
-		times[1] = rand()%6;
-		pthread_create(&(threads[1]), NULL, run_a, &(times[1]));
-		times[2] = rand()%9;
-		pthread_create(&(threads[2]), NULL, run_a, &(times[2]));
-		times[3] = rand()%16;
-		pthread_create(&(threads[3]), NULL, run_a, &(times[3]));*/
-		run_b(rand()%3);
-		run_b(rand()%6);
-		run_b(rand()%9);
-		run_b(rand()%SWAP_SIZE);
-		update_pages();
+												
+		for(int j=0;j<NUM_ITERS;j++){
+			double rand_numb = randn(RAM_SIZE/2, RAM_SIZE/8);
+			int x = (int)rand_numb;
+			printf("NUM ALEATORIO: %d\n", x);
+			run_b(x);
+		}
+		update_ages();
 		release_all();
+		registros[ind] = misses;
+		VIRTUAL_TIME++;
 	}
-	save_all_in_mem();
-	printf("\nmisses: %d\n", misses);
-	print_all_in_mem();
-	print_addresses();
+	FILE* f = fopen("misses.txt","w+");
+	for(int j=0; j<NUM_ITERS;j++){
+		fprintf(f,"%d\n", registros[j]);
+	}
+	fclose(f);
+	//save_all_in_mem();
+	//printf("\nmisses: %d\n", misses);
+	//print_all_in_mem();
+	//print_addresses();
 	return 0;
 }

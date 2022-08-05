@@ -1,5 +1,5 @@
 #include "memory.h"
-
+#include "normal.h"
 #ifndef HEADER_PR
 #define HEADER_PR
 
@@ -12,8 +12,6 @@ typedef struct {
 	int size;
 }handler;
 typedef handler * hndptr;
-
-int misses;
 
 handler crt_handler(int ref_ram, int ref_swap, int amount_ram, int amount_swap){
 	handler p = {malloc(sizeof(page)*(amount_ram + amount_swap)), amount_ram + amount_swap};
@@ -29,6 +27,7 @@ handler crt_handler(int ref_ram, int ref_swap, int amount_ram, int amount_swap){
 	}
 
 	for(int i = amount_ram; i < amount_swap; i++, index++){
+		
 		p.pages[index] = crt_page(rand(), SWAP, ref_swap + i);
 		write_swap(i, p.pages[index]);
 		addresses[i] = -1;
@@ -37,25 +36,21 @@ handler crt_handler(int ref_ram, int ref_swap, int amount_ram, int amount_swap){
 }
 
 int get_removable_frame_NUR(){ // NUR
-	int i, start = rand() % RAM_SIZE;
-	for(i=start; i<start+RAM_SIZE; i++){
-		if(!((ram.pages[i%RAM_SIZE]).ref) && !((ram.pages[i%RAM_SIZE]).drty)){
-			return i;
-		}
+	int ret, i, j=0;
+	int** cls_i = (int **)malloc(4*sizeof(int*));
+	for(int j = 0; j < 4; j++) cls_i[j] = (int*)malloc(sizeof(int));
+	char count_cls[4] = {0};
+	for(i=0;i<RAM_SIZE;i++){
+		int cls_val = ((ram.pages[i]).ref)*4+((ram.pages[i]).drty)*2;
+		cls_val = cls_val/2;
+		cls_i[cls_val][count_cls[cls_val]] = i;
+		count_cls[cls_val]++;
+		cls_i[cls_val] = (int*)realloc(cls_i[cls_val/2], (count_cls[cls_val]+1)*sizeof(int));
 	}
-	for(i=start; i<start+RAM_SIZE; i++){
-		if(!((ram.pages[i%RAM_SIZE]).ref)){
-			return i;
-		}
-	}
-	for(i=start; i<start+RAM_SIZE; i++){
-		if(!((ram.pages[i%RAM_SIZE]).drty)){
-			return i;
-		}
-	}
-	return start;
-
-
+	while(!(count_cls[j]!=0)){j++;}
+	ret = cls_i[j][rand()%count_cls[j]];
+	free(cls_i);
+	return ret;
 }
 
 int get_removable_frame_AGING(){ // Aging
@@ -69,7 +64,13 @@ int get_removable_frame_AGING(){ // Aging
 }
 
 int load_page(int ind){
-	int new_index = get_removable_frame_NUR();
+	int new_index;
+	if(ALGORITHM=="NUR"){
+		new_index = get_removable_frame_NUR();	
+	}
+	else{
+		new_index = get_removable_frame_AGING();		
+	}
 	swap_memory(new_index, ind);
 	return new_index;
 }
@@ -86,25 +87,24 @@ int get_page(int ind){
 		return x;
 	}
 	printf("Pagina encontrada em: %d\n\n", x);
-	(ram.pages[x]).ref = 1;
+	(ram.pages[x]).ref = true;
+	ref_times[ram.pages[x].block] = VIRTUAL_TIME;
 	return x;
 }
 
-void release_page(int ind){
+int release_page(int ind){
 	int x = addresses[ind];
-	(ram.pages[x]).ref = 0;
-}
-
-void undirtify(){
-	int i;
-	for(i=0; i<RAM_SIZE; i++){
-		(ram.pages[i]).drty = 0;
+	if(x==-1){return 0;}
+	if(VIRTUAL_TIME - ref_times[ram.pages[x].block] > RELEASE_THRESHOLD){
+		(ram.pages[x]).ref = 0;
 	}
+	else{ref_times[ram.pages[x].block]++;}
+	return 0;
 }
 
 void release_all(){
 	int i;
-	for(i=0; i<RAM_SIZE; i++){
+	for(i=0; i<SWAP_SIZE; i++){
 		release_page(i);
 	}
 }
@@ -117,7 +117,7 @@ void print_addresses(){
 	}
 }
 
-void update_pages(){
+void update_ages(){
 	int i;
 	//Aging
 	for(i=0; i<RAM_SIZE; i++){
@@ -126,7 +126,5 @@ void update_pages(){
 			(ram.pages[i]).age += 10000000;
 		}
 	}
-	
-	//undirtify();
 }
 #endif

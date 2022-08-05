@@ -1,16 +1,12 @@
-#include "table.h"
-
+#include "page.h"
 #ifndef HEADER_MEM
 #define HEADER_MEM
-
 typedef struct {
 	pgptr pages;
 	int size;
 	int pos;
 } memory;
-
 memory ram;
-int addresses[SWAP_SIZE];
 
 void crt_memory(int size, memory* m){
 	memory mem = {malloc(size*sizeof(page)), size, 0};
@@ -23,30 +19,32 @@ void alloc_memory(memory* mem ,pgptr pg){
 }
 
 void write_swap(int pos, pgptr pg){
-	int algs = 5; // int algs = log10(pos)+1;
-	char *arquivo_nome = (char*)malloc((4+algs)*sizeof(char));
+	int algs = 5;
+	char *arquivo_nome = (char*)calloc((4+algs), sizeof(char));
 	FILE *sw;
 	pg->location = SWAP;
-	pg->block = pos; // era "= ram_adr;"
+	//pg->block = pos; // era "= ram_adr;"
+	//printf("Novo block: %d\n", pg->block);
 	sprintf(arquivo_nome, "%d%s", pos, ".pag");
 	sw = fopen(arquivo_nome,"w");
 
-	fprintf(sw, "%d\n%d\n%d\n%d\n%d\n", pg->ref, pg->drty, pg->dat, pg->location, pg->block);
+	fprintf(sw, "%d\n%d\n%d\n%d\n%d\n", 0, 0, pg->dat, pg->location, pg->block);
+	ref_times[pg->block]=0;
 	fclose(sw);
 }
 
 void read_swap(int pos, pgptr pg){
-	int algs = 5; // int algs = log10(pos)+1;
+	int algs = 5;
 	int aux_drty, aux_ref, aux_location;
-	char *arquivo_nome = (char*)malloc((4+algs)*sizeof(char));
+	char *arquivo_nome = (char*)calloc((4+algs), sizeof(char));
 	FILE *sw;
 	sprintf(arquivo_nome, "%d%s", pos, ".pag");
 	sw = fopen(arquivo_nome,"r");
 	fscanf(sw, "%d\n%d\n%d\n%d\n%d\n", &aux_ref, &aux_drty, &(*pg).dat, &aux_location, &(*pg).block);
-	
+	ref_times[pg->block]=VIRTUAL_TIME;
 	(*pg).ref = aux_ref;
 	(*pg).drty = aux_drty;
-	(*pg).location = aux_location;
+	(*pg).location = RAM;
 	(*pg).age = 0;
 	fclose(sw);
 }
@@ -60,16 +58,15 @@ void save_all_in_mem(){
 }
 
 void swap_memory(int ram_adr, int swap_adr){
+	//printf("RAM_ADR, SWAP ADR : %d %d\n", ram_adr, swap_adr);
 	pgptr buff = &ram.pages[ram_adr];
-
+	page p = *buff;
+	//printf("Página selecionada: %d\n", p.block);
 	addresses[(*buff).block] = -1;
 	addresses[swap_adr] = ram_adr;
-	
-	(*buff).location = SWAP;
-	(*buff).block = swap_adr;
 
 	read_swap(swap_adr, &(ram.pages[ram_adr]));
-	write_swap(swap_adr, (buff));
+	write_swap(p.block, &p);
 }
 
 void print_all_in_mem(){
